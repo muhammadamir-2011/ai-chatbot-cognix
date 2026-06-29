@@ -6,7 +6,8 @@ Bu server Gemini API bilan gaplashadi va API kalitni xavfsiz saqlaydi
 
 import os
 import requests
-from flask import Flask, render_template, request, jsonify
+from flask import Response
+from flask import Flask, render_template, request, jsonify, Response
 from dotenv import load_dotenv
 
 # .env faylidan API kalitni o'qish
@@ -44,6 +45,23 @@ def robots():
     """Qidiruv tizimlari uchun robots.txt'ni ildiz manzilda taqdim etadi."""
     return app.send_static_file("robots.txt")
 
+
+@app.route("/sitemap.xml")
+def sitemap():
+
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+<url>
+    <loc>https://ai-chatbot-cognix.onrender.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+</url>
+
+</urlset>
+"""
+
+    return Response(xml, mimetype="application/xml")
 
 @app.route("/api/chat", methods=["POST"])
 def chat():

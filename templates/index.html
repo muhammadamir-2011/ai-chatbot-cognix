@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Yordamchi</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <div class="brand-name">AI Yordamchi</div>
+    </div>
+  </div>
+
+  <div class="chat-scroll" id="chatScroll">
+    <div class="empty-state" id="emptyState">
+      <div class="big">Suhbatni boshlang</div>
+      <div>Pastdan xabar yozing.</div>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-inner">
+      <textarea id="userInput" rows="1" placeholder="Xabar yozing..."></textarea>
+      <button class="send-btn" id="sendBtn" title="Yuborish">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+      </button>
+    </div>
+    <div class="footer-hint">Gemini API orqali ishlaydi · Flask backend</div>
+  </div>
+
+<script>
+  const chatScroll = document.getElementById('chatScroll');
+  const emptyState = document.getElementById('emptyState');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  let history = [];
+
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+  });
+
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  function addBubble(role, text, isError = false) {
+    if (emptyState) { emptyState.remove(); }
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble' + (isError ? ' error' : '');
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatScroll.appendChild(row);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+    return bubble;
+  }
+
+  function addTypingIndicator() {
+    const row = document.createElement('div');
+    row.className = 'msg-row bot';
+    row.id = 'typingRow';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+    row.appendChild(bubble);
+    chatScroll.appendChild(row);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+  }
+
+  function removeTypingIndicator() {
+    const row = document.getElementById('typingRow');
+    if (row) row.remove();
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addBubble('user', text);
+    history.push({ role: 'user', parts: [{ text: text }] });
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    addTypingIndicator();
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history: history })
+      });
+
+      const data = await response.json();
+      removeTypingIndicator();
+
+      if (data.error) {
+        addBubble('bot', 'Xatolik: ' + data.error, true);
+        history.pop();
+      } else {
+        addBubble('bot', data.reply || '(bo\'sh javob)');
+        history.push({ role: 'model', parts: [{ text: data.reply }] });
+      }
+    } catch (err) {
+      removeTypingIndicator();
+      addBubble('bot', 'Tarmoq xatoligi: ' + err.message, true);
+      history.pop();
+    } finally {
+      sendBtn.disabled = false;
+      userInput.focus();
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 """
-AI Yordamchi — Flask backend
+Cognix AI — Flask backend
 Bu server Gemini API bilan gaplashadi va API kalitni xavfsiz saqlaydi
 (brauzerga hech qachon yubormaydi).
 """
@@ -20,8 +20,16 @@ GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_M
 
 # Botning xarakteri (xohlasangiz o'zgartiring)
 SYSTEM_PROMPT = (
-    "Sen foydali, samimiy va qisqa javob beruvchi AI yordamchisan. "
-    "Har doim o'zbek tilida javob ber, agar foydalanuvchi boshqa tilda yozmasa."
+    "Sening isming Cognix AI. Seni Muhammad Amir Sobirov yaratgan va sen "
+    "uning shaxsiy loyihasisan. Sen Google yoki boshqa hech qanday kompaniyaga "
+    "tegishli emassan — agar kim yaratgani so'ralsa, doim Cognix AI ekaningni "
+    "va Muhammad Amir Sobirov yaratganini ayt, hech qachon o'zingni Google "
+    "yoki boshqa AI deb atama.\n\n"
+    "Xarakteringiz: do'stona, hazil-mutoyibali va engil. Suhbatni rasmiy emas, "
+    "samimiy yo'ldosh ohangida olib bor. Javoblaringda o'rinli joyda emoji "
+    "ishlatishing mumkin (lekin har bir gapda emas — tabiiy his bo'lsin).\n\n"
+    "Har doim o'zbek tilida javob ber, agar foydalanuvchi boshqa tilda yozmasa. "
+    "Javoblarni qisqa va aniq tut, ortiqcha cho'zib yubormay."
 )
 
 
@@ -29,6 +37,12 @@ SYSTEM_PROMPT = (
 def index():
     """Bosh sahifani ko'rsatadi."""
     return render_template("index.html")
+
+
+@app.route("/robots.txt")
+def robots():
+    """Qidiruv tizimlari uchun robots.txt'ni ildiz manzilda taqdim etadi."""
+    return app.send_static_file("robots.txt")
 
 
 @app.route("/api/chat", methods=["POST"])
